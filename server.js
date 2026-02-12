@@ -8,7 +8,7 @@ app.use(express.json());
 
 const GEMINI_KEY = process.env.GEMINI_KEY;
 
-// ТЕСТОВЫЙ ROUTE (проверка сервера)
+// Проверка сервера
 app.get("/", (req, res) => {
   res.send("E-Salyq Gemini Backend Working 🚀");
 });
@@ -22,7 +22,7 @@ app.post("/chat", async (req, res) => {
     }
 
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_KEY}`,
       {
         method: "POST",
         headers: {
@@ -47,7 +47,6 @@ app.post("/chat", async (req, res) => {
     console.log("FULL GEMINI RESPONSE:");
     console.log(JSON.stringify(data, null, 2));
 
-    // Если Gemini вернул ошибку
     if (data.error) {
       console.error("Gemini API Error:", data.error);
       return res.status(500).json({
