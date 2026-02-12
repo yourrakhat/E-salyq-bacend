@@ -13,7 +13,7 @@ app.post("/chat", async (req, res) => {
     const userMessage = req.body.message;
 
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_KEY}`,
+      `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`,
       {
         method: "POST",
         headers: {
@@ -22,10 +22,8 @@ app.post("/chat", async (req, res) => {
         body: JSON.stringify({
           contents: [
             {
-              parts: [
-                { text: "Ты профессиональный налоговый консультант для Казахстана. И ты должен помогать по всем вопросам которые они зададут тебе" },
-                { text: userMessage }
-              ]
+              role: "user",
+              parts: [{ text: userMessage }]
             }
           ]
         })
@@ -34,9 +32,19 @@ app.post("/chat", async (req, res) => {
 
     const data = await response.json();
 
-    const reply =
-      data.candidates?.[0]?.content?.parts?.[0]?.text ||
-      "Жауап табылмады";
+    console.log("Gemini response:", JSON.stringify(data));
+
+    let reply = "Жауап табылмады";
+
+    if (
+      data.candidates &&
+      data.candidates.length > 0 &&
+      data.candidates[0].content &&
+      data.candidates[0].content.parts &&
+      data.candidates[0].content.parts.length > 0
+    ) {
+      reply = data.candidates[0].content.parts[0].text;
+    }
 
     res.json({ reply });
 
