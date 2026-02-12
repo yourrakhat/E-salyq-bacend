@@ -8,9 +8,18 @@ app.use(express.json());
 
 const GEMINI_KEY = process.env.GEMINI_KEY;
 
+// ТЕСТОВЫЙ ROUTE (проверка сервера)
+app.get("/", (req, res) => {
+  res.send("E-Salyq Gemini Backend Working 🚀");
+});
+
 app.post("/chat", async (req, res) => {
   try {
     const userMessage = req.body.message;
+
+    if (!GEMINI_KEY) {
+      return res.status(500).json({ reply: "GEMINI_KEY табылмады" });
+    }
 
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`,
@@ -22,8 +31,11 @@ app.post("/chat", async (req, res) => {
         body: JSON.stringify({
           contents: [
             {
-              role: "user",
-              parts: [{ text: userMessage }]
+              parts: [
+                {
+                  text: `Ты налоговый консультант для Казахстана. Отвечай понятно и кратко.\n\nВопрос: ${userMessage}`
+                }
+              ]
             }
           ]
         })
@@ -32,24 +44,27 @@ app.post("/chat", async (req, res) => {
 
     const data = await response.json();
 
-    console.log("Gemini response:", JSON.stringify(data));
+    console.log("FULL GEMINI RESPONSE:");
+    console.log(JSON.stringify(data, null, 2));
+
+    // Если Gemini вернул ошибку
+    if (data.error) {
+      console.error("Gemini API Error:", data.error);
+      return res.status(500).json({
+        reply: "Gemini қатесі: " + data.error.message
+      });
+    }
 
     let reply = "Жауап табылмады";
 
-    if (
-      data.candidates &&
-      data.candidates.length > 0 &&
-      data.candidates[0].content &&
-      data.candidates[0].content.parts &&
-      data.candidates[0].content.parts.length > 0
-    ) {
+    if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
       reply = data.candidates[0].content.parts[0].text;
     }
 
     res.json({ reply });
 
   } catch (error) {
-    console.error(error);
+    console.error("SERVER ERROR:", error);
     res.status(500).json({ reply: "Сервер қатесі" });
   }
 });
