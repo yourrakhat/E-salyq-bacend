@@ -6,30 +6,26 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const OPENAI_KEY = process.env.OPENAI_KEY;
+const GEMINI_KEY = process.env.GEMINI_KEY;
 
 app.post("/chat", async (req, res) => {
   try {
     const userMessage = req.body.message;
 
     const response = await fetch(
-      "https://api.openai.com/v1/chat/completions",
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_KEY}`,
       {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${OPENAI_KEY}`,
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          model: "gpt-4o-mini",
-          messages: [
+          contents: [
             {
-              role: "system",
-              content: "Ты налоговый консультант для Казахстана."
-            },
-            {
-              role: "user",
-              content: userMessage
+              parts: [
+                { text: "Ты профессиональный налоговый консультант для Казахстана. И ты должен помогать по всем вопросам которые они зададут тебе" },
+                { text: userMessage }
+              ]
             }
           ]
         })
@@ -38,9 +34,11 @@ app.post("/chat", async (req, res) => {
 
     const data = await response.json();
 
-    res.json({
-      reply: data.choices?.[0]?.message?.content || "Жауап табылмады"
-    });
+    const reply =
+      data.candidates?.[0]?.content?.parts?.[0]?.text ||
+      "Жауап табылмады";
+
+    res.json({ reply });
 
   } catch (error) {
     console.error(error);
